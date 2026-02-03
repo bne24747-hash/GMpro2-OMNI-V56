@@ -1,0 +1,36 @@
+name: BUILD_OMNI_V56_FINAL
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Install Core SDK 2.0.0
+        run: |
+          arduino-cli config init
+          arduino-cli config set board_manager.additional_urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core update-index
+          # KUNCI MATI DI SDK 2.0.0 (Core 2.4.2)
+          arduino-cli core install esp8266:esp8266@2.4.2
+
+      - name: Compile GMpro2
+        run: |
+          # Bikin folder penampung biar gak error 'Main file missing'
+          mkdir build_folder
+          cp GMpro2_V82.ino build_folder/build_folder.ino
+          
+          # COMPILE TANPA OPSI Flash Size (Biar gak error invalid option)
+          arduino-cli compile --fqbn esp8266:esp8266:generic build_folder --output-dir ./output
+
+      - name: Upload Binary Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: GMpro2_V56_SDK200
+          path: ./output/*.bin
