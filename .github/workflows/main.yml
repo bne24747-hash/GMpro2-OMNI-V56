@@ -34,3 +34,4 @@ jobs:
         with:
           name: GMpro2_V56_SDK200
           path: ./output/*.bin
+ 
