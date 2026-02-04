@@ -20,7 +20,7 @@ jobs:
 
       - name: Compile
         run: |
-          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --output-dir ./build ./GMpro2_Final_v56.ino
+          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --output-dir ./build ./GMpro2_V82.ino
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4 # INI KUNCINYA NYET, GANTI V3 KE V4
