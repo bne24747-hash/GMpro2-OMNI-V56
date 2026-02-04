@@ -1,34 +1,29 @@
-name: Build M1Z23R Binaries
+name: Build GMpro2 v5.6
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Arduino CLI
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-          sudo mv bin/arduino-cli /usr/local/bin/
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
 
-      - name: Setup ESP8266 Core v2.0.0
+      - name: Install ESP8266 Core 2.0.0
         run: |
           arduino-cli config init
           arduino-cli core update-index --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
-          # KUNCI MATI: Install versi 2.0.0 biar bisa Deauth
           arduino-cli core install esp8266:esp8266@2.0.0 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
 
-      - name: Compile Binary
+      - name: Compile
         run: |
-          # Sesuaikan nama file .ino lu di sini nyet
-          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --output-dir ./build ./GMpro2_Ultimate_v56.ino
+          arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --output-dir ./build ./GMpro2_Final_v56.ino
 
-      - name: Upload Release Asset
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: M1Z23R_Final_Bin
+          name: M1Z23R_BIN_FINAL
           path: ./build/*.bin
