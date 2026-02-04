@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Update ke v4 biar aman
 
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1
@@ -23,7 +23,7 @@ jobs:
           arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 --output-dir ./build ./GMpro2_Final_v56.ino
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # INI KUNCINYA NYET, GANTI V3 KE V4
         with:
           name: M1Z23R_BIN_FINAL
           path: ./build/*.bin
